@@ -9,7 +9,7 @@ import importlib
 from scipy.stats import skew, kurtosis, chi2
 
 import os 
-direccion1 = 'E:/UNSA 2022 CC/semestre par/tesis/Optimum_portfolio_py' + '/acciones/'
+direccion1 = '/media/cristian/88B2BE6CB2BE5DFE/2022_UNSA/semestre par/economia/tesis_2/PORTAFOLIO_PY/Optimum_portfolio_py/acciones/'
 os.chdir(direccion1)
 
 
@@ -49,4 +49,5 @@ def distributions_graph_of(x, ric, string_plot, bins = 100):
     plt.hist(x, bins)
     plt.title('Grafico de distribucion para la variable ' + ric)
     plt.xlabel(string_plot)
+    plt.tight_layout()
     plt.show()
