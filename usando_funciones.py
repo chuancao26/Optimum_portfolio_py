@@ -6,29 +6,25 @@ import scipy
 import importlib
 from scipy.stats import skew, kurtosis, chi2
 
+import os 
+direccion = 'E:/UNSA 2022 CC/semestre par/tesis/Optimum_portfolio_py'
+os.chdir(direccion)
 import functions
 importlib.reload(functions)
 
-
-import os 
-
-os.chdir('E:/UNSA 2022 CC/semestre par/tesis')
-
 #%%
 # vamos a hacer funciones para poder reutilzar todo este codigo
-os.chdir('E:/UNSA 2022 CC/semestre par/tesis/acciones')
-acciones = os.listdir('E:/UNSA 2022 CC/semestre par/tesis/acciones')
+acciones = os.listdir(direccion + '/acciones')
+acciones
 # ['DBK.DE.csv', '^IXIC.csv']
 #%%
 # veamos los inputs
-acciones
 ric = '^TYX' # Out[12]: ['GE.csv', 'MCD.csv', 'META.csv', '^IXIC.csv', '^TYX.csv']
-path = 'E:/UNSA 2022 CC/semestre par/tesis/acciones/'
+path = direccion + '/acciones/'
 file_extension = 'csv'
 x, x_str, t = functions.load_time_series(ric, file_extension)
 # haciendo movil la entrada de dato
 x_size = len(x)
-
 x_mean = np.mean(x)
 x_std = np.std(x)
 x_skew = skew(x)
@@ -85,16 +81,6 @@ string_plot = 'Analisis para el activo: ' + ric + '\n' + ' | Media: ' + str(np.r
 
 functions.time_series_graph_of(t, ric)
 functions.distributions_graph_of(x, ric, string_plot)
-#%%
-# Graficando la distribucion de los retornos
-plt.figure()
-plt.hist(x, bins = 100)
-plt.title('Grafico de distribucion para la variable ' + ric[:ric.rfind('.csv')])
-plt.xlabel(str1 + '\n' + str2)
-plt.show()
-dir(acciones[1])
-
-
 
 
 

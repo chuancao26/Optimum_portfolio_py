@@ -9,17 +9,15 @@ import importlib
 from scipy.stats import skew, kurtosis, chi2
 
 import os 
-
-os.chdir('E:/UNSA 2022 CC/semestre par/tesis/acciones')
-
-
+direccion1 = 'E:/UNSA 2022 CC/semestre par/tesis/Optimum_portfolio_py' + '/acciones/'
+os.chdir(direccion1)
 
 
 def load_time_series(ric, file_extension = 'csv'):
     # con su extension csv   
     # haciendo movil la entrada de datos
     
-    path = 'E:/UNSA 2022 CC/semestre par/tesis/acciones/'
+    path = direccion1
     table_raw = pd.read_csv(path + ric + '.' + file_extension)
     # ahora convertiremos estos dates simples en datetimes
     # para lo q creare un df
