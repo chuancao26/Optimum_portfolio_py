@@ -9,8 +9,25 @@ import importlib
 from scipy.stats import skew, kurtosis, chi2
 
 import os 
-direccion1 = '/media/cristian/88B2BE6CB2BE5DFE/2022_UNSA/semestre par/economia/tesis_2/PORTAFOLIO_PY/Optimum_portfolio_py/acciones/'
+direccion1 = '/media/cristiand/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/'
 os.chdir(direccion1)
+
+
+# def bd_returns():
+    
+
+
+# def returns_of(ric):
+    
+
+
+
+def date(ric):
+    path = direccion1 + ric
+    date_df = pd.read_csv(path)
+    date_df = date_df.dropna() 
+    date_df['Date'] = pd.to_datetime(date_df['Date'], dayfirst = True)
+    return date_df['Date']
 
 
 def load_time_series(ric, file_extension = 'csv'):
