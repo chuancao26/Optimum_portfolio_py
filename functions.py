@@ -9,7 +9,7 @@ import importlib
 from scipy.stats import skew, kurtosis, chi2
 
 import os 
-direccion1 = '/media/cristiand/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/'
+direccion1 = 'E:/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/'
 os.chdir(direccion1)
 
 
@@ -27,8 +27,7 @@ def date(ric):
     date_df = pd.read_csv(path)
     date_df = date_df.dropna() 
     date_df['Date'] = pd.to_datetime(date_df['Date'], dayfirst = True)
-    return date_df['Date']
-
+    return len(date_df['Date'])
 
 def load_time_series(ric, file_extension = 'csv'):
     # con su extension csv   
