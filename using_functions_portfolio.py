@@ -1,6 +1,6 @@
 # Apartado de librerias necesarias para el procesamiento de datos 
 import os 
-os.chdir('/media/cristiandavid/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/')
+os.chdir("E:/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py")
 import classes 
 
 import numpy as np
@@ -18,7 +18,7 @@ importlib.reload(classes)
 
 #%% Funciones 
 
-direccion = '/media/cristiandavid/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/'
+direccion = 'E:/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/'
 
 def date(ric):
     path = direccion + ric
@@ -48,10 +48,10 @@ def load_time_series(ric):
     # x_size = len(x)
     return x, x_str, t
 
-def time_series_graph_of(t, ric):
+def time_series_graph_of(x, y, name = ''):
     plt.figure()
-    plt.plot(t.Date, t.close, color = 'r')
-    plt.title('Time Series Graph of ' + ric)
+    plt.plot(x, y, color = 'r')
+    plt.title('Time Series Graph of ' + name)
     plt.xlabel('Time')
     plt.ylabel('Price')
     plt.show()
@@ -70,6 +70,9 @@ def elementos(ric):
 
 def base_retornos(rics):
     '''
+        Formato de leido CSV. 
+        Vector con el nombre de los archivos.csv
+    
         input: Vector de RICS 
         return: Price df 
                 Return df
@@ -100,7 +103,7 @@ def base_retornos(rics):
         base_retornos[ric.replace('.csv', '') + '_return'] = data.Close / data.Close.shift(1) - 1
         base_prices[ric.replace('.csv', '') + '_price'] = data.Close   
         
-    return base_prices, base_retornos, ric_menor
+    return base_prices.dropna(axis = 0), base_retornos.dropna(axis = 0)
 
 
 # df_p['Date'] = pd.to_datetime(df_p.Date, dayfirst = True)
@@ -114,71 +117,61 @@ def base_retornos(rics):
 
 #%%
 # primero vere mis raw materials
-os.chdir('/media/cristiandavid/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/')
+os.chdir('E:/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/')
 acciones = os.listdir()
-# Primero cargemos los datos 
-# usando las funciones presentes en el script de funciones 
-ric = acciones[27]
-date(ric)
-ric2 = acciones [24]
 
+# Creando la base de datos, tambien conocieda como la matriz de precios y retornos
+price_matrix, returns_matrix = base_retornos(acciones)
 
+# Ahora veamos el enfoque del modelo CAPM
+# Para lo cual necesitamos hacer una regresion lineal teniendo como variable 
+# dependiente al vector de retornos de una accion y como independiente al vector 
+# retornos de un activo de mercado. Como seria el caso de un indice de mercado
+returns_matrix.columns
+# Definamos el vector de retornos del activo de mercado
+# Dado que tenemos acciones de mercados europeros tomaremos en cuenta al STOXX Y 
+# STOXX50
 
-# Hallando los retornos 
-df_p = pd.read_csv('/media/cristiandavid/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/' + ric)
-df_2p = pd.read_csv('/media/cristiandavid/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/' + ric2)
-df_p.shape
-df_2p.shape
-df_p['Date'] = pd.to_datetime(df_p.Date, dayfirst = True)
-df_2p['Date'] = pd.to_datetime(df_2p.Date, dayfirst = True)
-times1 = list(df_p.Date.values)
-times2 = list(df_2p.Date.values)
-timess = list (set(times1) & set(times2))
-df_2p[df_2p.Date.isin(timess)]
+# Definire una lista con los nombres de los activos de mercado
+market_assets = ['^STOXX50E_return','^STOXX_return', '^S&P500_return']
+x = np.array(returns_matrix[market_assets[2]])
+# definidos mis activos de mercado, procedo a elegir un activo de este mercado 
+y = np.array(returns_matrix['^VIX_return'])
 
-
-df_nuevo = pd.DataFrame()
-df_nuevo['Retorno'] = df_p.Close / df_p.Close.shift(1) - 1
-df_nuevo['Price'] = df_p.Close
-# Podemos hacerlo al final
-
-df_nuevo.Date
-# df_nuevo.dropna(axis = 0, inplace = True)
-df_nuevo.shape
-
-
-
-
-# Graficos
-plt.figure()
-plt.plot(df_nuevo.Date, df_nuevo.Retorno)
-plt.show()
+# Instancio la clase linregress del modulo np.stats
+capm = scipy.stats.linregress(x,y)
+dir(capm)
+capm.slope
+capm.intercept
 
 
 plt.figure()
-plt.plot(df_nuevo.Date, df_nuevo.Close)
+plt.scatter(x,y)
 plt.show()
 
-# lo que queremos es juntar en un dataframe los retornos de todas las acciones en 
-# un dataframe
-# veamos la cantidad de elementos de cada uno de los archivos en la carpeta acciones
-
-
-
-
-# veamos el proceso de filtracion para obtener un solo df con el date minimo
-# t1 = t1[t1.Date.isin((set(t.Date) & set(t1.Date)))]
+plt.hist(y, bins = 100)
+plt.show()
+# (1 + np.mean(x))**360 - 1 
+# /
 
 
 
 
 
-#%% Probando monstrito
-prices_df, returns_df, menorss= base_retornos(acciones)
-prices_df.isnull().sum()
-returns_df.isnull().sum()
-elementos(acciones[27])
-prices_df[prices_df['^GDAXI_price'].isna()]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
