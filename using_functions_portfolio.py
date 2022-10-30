@@ -1,6 +1,6 @@
 # Apartado de librerias necesarias para el procesamiento de datos 
 import os 
-os.chdir("/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/")
+os.chdir("/home/cristiandavid/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/")
 import classes 
 
 import numpy as np
@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import scipy
 import importlib
 from scipy.stats import skew, kurtosis, chi2
+import yfinance as yf
 
 
 
@@ -17,7 +18,7 @@ importlib.reload(classes)
 # datos
 #%% Corrigiendo el cargador de datos 
 
-os.chdir("/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/")
+os.chdir("/home/cristiandavid/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/")
 asset = pd.read_csv('BBVA.MC.csv', usecols = ['Date'])
 bench = pd.read_csv("^STOXX.csv", usecols = ['Date'])
 asset = pd.to_datetime(asset.Date, dayfirst = True)
@@ -30,7 +31,15 @@ asset = asset[asset.isin(time)
 # asset.reset_index()
 
 #%% Funciones 
-direccion = '/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/'
+direccion = '/home/cristiandavid/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/'
+def yahoo_api(etfs):
+    os.chdir('/home/cristiandavid/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/')
+    for i in etfs:
+        df = yf.download(i, period = '5y', interval = '1d')
+        df.to_csv(i + '.csv')
+
+
+
 def merge(acciones):
     data = pd.read_csv(direccion + acciones[1], usecols = ['Date'])
     data.Date = pd.to_datetime(data.Date, dayfirst = True)
@@ -52,11 +61,14 @@ def get_data(acciones):
         data = data.reset_index()
         data['returns'] = data.Close/data.Close.shift() - 1
         df[i.replace('.csv','').replace('^','')] = data.returns
-        df2[i.replace('csv','').replace('^','')] = data.Close
-        os.chdir('/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py')
-        df.dropna(axis = 0).to_csv('Retornos.csv')
-        df2.dropna(axis = 0).to_csv('Precios.csv')
-# def menor(acciones):
+        df2[i.replace('.csv','').replace('^','')] = data.Close
+        
+    os.chdir('/home/cristiandavid/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py')
+    df['date'] = data.Date
+    df2['date'] = data.Date
+    df.dropna(axis = 0).to_csv('Retornos.csv')
+    df2.dropna(axis = 0).to_csv('Precios.csv')
+    # def menor(acciones):
 #     """
 #     Inputs:
 #         Acciones: iterable
@@ -85,14 +97,14 @@ class CAPM():
         Ambos deben de ser Objetos de tipo String.    
     '''
     def __init__(self, asset, benchmark):
-        direccion = '/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/'
-        retornos = pd.read_csv(direccion + 'Retornos.csv')
-        precios = pd.read_csv(direccion + 'Precios.csv')
+        direccion = '/home/cristiandavid/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/'
+        self.retornos = pd.read_csv(direccion + 'Retornos.csv')
+        self.precios = pd.read_csv(direccion + 'Precios.csv')
         
-        self.asset = retornos[asset].name
-        self.benchmark = retornos[benchmark].name
-        self.y = retornos[asset].values
-        self.x = retornos[benchmark].values
+        self.asset = self.retornos[asset].name
+        self.benchmark = self.retornos[benchmark].name
+        self.y = self.retornos[asset].values
+        self.x = self.retornos[benchmark].values
         self.beta = None
         self.alpha = None
         self.r_value = None
@@ -128,16 +140,16 @@ class CAPM():
         plt.show()
         
     def dual_graph_normaliced(self):
-        price_asset = precios[asset]
-        price_benchamark = precios[benchmark]
+        price_asset = self.precios[self.asset]
+        price_benchamark = self.precios[self.benchmark]
         plt.figure()
         plt.title('Serie de tiempo de los precios de |n' + self.asset + self.benchmark + '|n Normalizados a 100')
         plt.xlabel('Tiempo')
         plt.ylabel('Precios Normalizados')
         price_asset = 100 * price_asset / price_asset[0]
         price_benchamark = 100 * price_benchamark / price_benchamark[0]
-        plt.plot(price_asset, color = 'r', label = asset)
-        plt.plot(price_benchamark, color = 'black', label = benchmark)
+        plt.plot(price_asset, color = 'r', label = self.asset)
+        plt.plot(price_benchamark, color = 'black', label = self.benchmark)
         plt.legend(loc = 0)
         plt.tight_layout()
         plt.show()
@@ -150,14 +162,14 @@ class CAPM():
         
 #%%
 # primero vere mis raw materials
-os.chdir('/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/')
+os.chdir('/home/cristiandavid/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/')
 acciones = os.listdir()
 # En accioens se encuentra una lista con todos los activos descargados en formato
 # csv
 # Posteriomente procesare cada uno de estos datos y los unire en un solo df
 get_data(acciones)
-
-returns, prices = get_data(acciones)
+#%%
+# Probando los algoritmos..
 df.columns
 market_assets = ['STOXX50E','STOXX','S&P500']
 
@@ -167,8 +179,12 @@ capm.compute()
 capm.scatter()
 capm.alpha
 capm.dual_graph_normaliced()
+
+
 # Creando la base de datos, tambien conocieda como la matriz de precios y retornos
 # price_matrix, returns_matrix = base_retornos(acciones)
+df = pd.read_csv('Precios.csv')
+df.index = df.date
 
 # Ahora veamos el enfoque del modelo CAPM
 # Para lo cual necesitamos hacer una regresion lineal teniendo como variable 
@@ -177,8 +193,55 @@ capm.dual_graph_normaliced()
 # Definamos el vector de retornos del activo de mercado
 # Dado que tenemos acciones de mercados europeros tomaremos en cuenta al STOXX Y 
 # STOXX50
+#%%DESCARGAR DE LOS DATOS A USAR 
+# Definire una lista con el nombre de todos los activos que usare 
+# La informacion presentada saldra de la lista de SPDR etf listing 
+# en la seccion de INDUSTRY 
+etfs = ['KBE','KRE','KCE','KIE','XAR','XTN','XBI','XPH','XHE','XHS','XOP','XME','XRT','XHB','XSD','XSW','XNTK','XITK','XTL','XWEB','EPU']
+# Para poder descargarlos usare la siguientie lireria de pandas 
+yahoo_api('S&P500')
 
-# Definire una lista con los nombres de los activos de mercado
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
