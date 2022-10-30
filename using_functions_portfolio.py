@@ -1,6 +1,6 @@
 # Apartado de librerias necesarias para el procesamiento de datos 
 import os 
-os.chdir("/media/cristiandavid/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/")
+os.chdir("/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/")
 import classes 
 
 import numpy as np
@@ -17,7 +17,7 @@ importlib.reload(classes)
 # datos
 #%% Corrigiendo el cargador de datos 
 
-os.chdir("/media/cristiandavid/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/")
+os.chdir("/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/")
 asset = pd.read_csv('BBVA.MC.csv', usecols = ['Date'])
 bench = pd.read_csv("^STOXX.csv", usecols = ['Date'])
 asset = pd.to_datetime(asset.Date, dayfirst = True)
@@ -27,89 +27,15 @@ asset['returns']
 time = set(asset) & set(bench)
 
 asset = asset[asset.isin(time)
-asset.reset_index()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# asset.reset_index()
 
 #%% Funciones 
-direccion = '/media/cristiandavid/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/'
-   
-
-
-
-# def base_retornos(rics):
-#     '''
-#         Formato de leido CSV. 
-#         Vector con el nombre de los archivos.csv
-    
-#         input: Vector de RICS 
-#         return: Price df 
-#                 Return df
-        
-#     '''
-#     # Primero hallamos el menor 
-#     menor = 100000
-#     for ric in rics:
-#         if (elementos(ric) < menor):
-#             menor = elementos(ric)
-#             ric_menor = ric
-    
-#     base_retornos = pd.DataFrame()
-#     base_prices = pd.DataFrame()
-#     menor_date = pd.read_csv(direccion + ric_menor)
-#     menor_date['Date'] = pd.to_datetime(menor_date.Date, dayfirst = True)
-#     base_retornos['Date'] = menor_date.Date
-#     base_prices['Date'] = menor_date.Date
-    
-#     for ric in rics:         
-#         data = pd.read_csv(direccion + ric).dropna(axis = 0)
-#         data['Date'] = pd.to_datetime(data.Date, dayfirst = True)
-#         times1 = list(data.Date.values)
-#         times2 = list(data.Date.values)
-#         common_times = list(set(times1) & set(times2))
-#         data = data[data.Date.isin(common_times)]
-#         data = data.reset_index()
-#         base_retornos[ric.replace('.csv', '') + '_return'] = data.Close / data.Close.shift(1) - 1
-#         base_prices[ric.replace('.csv', '') + '_price'] = data.Close   
-        
-#     return base_prices.dropna(axis = 0), base_retornos.dropna(axis = 0)
-
-# def largo(acciones):
-#     menor = 100000
-#     for i in acciones:
-#         data = pd.read_csv(direccion + i, usecols = ['Close']).dropna()
-#         if data.Close.shape[0] < menor:
-#             menor = data.Close.shape[0]
-#             asset = i
-#     asset_menor = pd.read_csv(direccion + asset, usecols = ['Close','Date']).dropna()
-#     asset_menor.Date = pd.to_datetime(asset_menor.Date, dayfirst = True)
-#     return set(asset_menor.Date)
-
-
+direccion = '/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/'
 def merge(acciones):
     data = pd.read_csv(direccion + acciones[1], usecols = ['Date'])
     data.Date = pd.to_datetime(data.Date, dayfirst = True)
     time = set(data.Date)
     for i in acciones:
-        print(time)
         data = pd.read_csv(direccion + i, usecols = ['Date'])
         data.Date = pd.to_datetime(data.Date, dayfirst = True)
         time = set(data.Date) & time
@@ -117,6 +43,7 @@ def merge(acciones):
 
 def get_data(acciones):
     df = pd.DataFrame()
+    df2 = pd.DataFrame()
     time = merge(acciones)
     for i in acciones:
         data = pd.read_csv(direccion + i, usecols = ['Date', 'Close'])        
@@ -124,11 +51,11 @@ def get_data(acciones):
         data = data[data.Date.isin(time)]
         data = data.reset_index()
         data['returns'] = data.Close/data.Close.shift() - 1
-        df[i.replace('.csv','')] = data.returns
-    return df
-    
-
-
+        df[i.replace('.csv','').replace('^','')] = data.returns
+        df2[i.replace('csv','').replace('^','')] = data.Close
+        os.chdir('/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py')
+        df.dropna(axis = 0).to_csv('Retornos.csv')
+        df2.dropna(axis = 0).to_csv('Precios.csv')
 # def menor(acciones):
 #     """
 #     Inputs:
@@ -147,36 +74,111 @@ def get_data(acciones):
 # timess = list (set(times1) & set(times2))
 # df_2p[df_2p.Date.isin(timess)]
 
+#%% Clase CAPM
+
+
+class CAPM():
+    '''
+    Inputs:
+        asset: NOmbre del activo financiero (valor de las y)
+        benchmark: NOmbre del activo de mercado (valor de x)
+        Ambos deben de ser Objetos de tipo String.    
+    '''
+    def __init__(self, asset, benchmark):
+        direccion = '/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/'
+        retornos = pd.read_csv(direccion + 'Retornos.csv')
+        precios = pd.read_csv(direccion + 'Precios.csv')
+        
+        self.asset = retornos[asset].name
+        self.benchmark = retornos[benchmark].name
+        self.y = retornos[asset].values
+        self.x = retornos[benchmark].values
+        self.beta = None
+        self.alpha = None
+        self.r_value = None
+        self.p_value = None
+        self.std_error = None
+        
+    def __str__(self):
+        str_self = 'Linear Regression | asset: ' + self.asset + '| Market Asset: ' + self.benchmark + '\n' + '| Alpha (Intercept): ' + str(self.alpha) + '| Beta (Slope): ' + str(self.beta) + '\n'\
+            + '| P_value: ' + str(self.p_value) + '| Null Hypthesis: ' + str(self.hypotesis) + '\n' + '|r-value: ' + str(self.r_value) + '| r-squared: ' + str(self.r_squared)
+        return str_self
+      
+
+    def compute(self):
+        decimals = 4
+        slope, intercept, r_value, p_value, std_error = scipy.stats.linregress(self.x, self.y)
+        self.beta = np.round(slope, decimals)
+        self.alpha = np.round(intercept, decimals)
+        self.r_value = np.round(r_value, decimals)
+        self.p_value = np.round(p_value, decimals)
+        self.hypotesis = self.p_value > .05 # Para valores significativos 
+        self.r_squared = np.round(r_value ** 2, decimals)
+        self.predictor = self.alpha + self.beta* self.x
+    
+    def scatter(self):
+        plt.figure()
+        plt.title(self.__str__())
+        plt.scatter(self.x, self.y)
+        plt.plot(self.x, self.predictor, c = 'r')
+        plt.ylabel(self.asset)
+        plt.xlabel(self.benchmark)
+        # plt.grid()
+        plt.tight_layout()
+        plt.show()
+        
+    def dual_graph_normaliced(self):
+        price_asset = precios[asset]
+        price_benchamark = precios[benchmark]
+        plt.figure()
+        plt.title('Serie de tiempo de los precios de |n' + self.asset + self.benchmark + '|n Normalizados a 100')
+        plt.xlabel('Tiempo')
+        plt.ylabel('Precios Normalizados')
+        price_asset = 100 * price_asset / price_asset[0]
+        price_benchamark = 100 * price_benchamark / price_benchamark[0]
+        plt.plot(price_asset, color = 'r', label = asset)
+        plt.plot(price_benchamark, color = 'black', label = benchmark)
+        plt.legend(loc = 0)
+        plt.tight_layout()
+        plt.show()
+        
+        
+        
+        
+        
+        
+        
 #%%
 # primero vere mis raw materials
-os.chdir('/media/cristiandavid/CURSOS FEC/UNSA 2022 CC/semestre par/ECONOMIA/tesis/Optimum_portfolio_py/acciones/')
+os.chdir('/home/cristiand/Documents/unsa_2022/economia/tesis_2/Optimum_portfolio_py/acciones/')
 acciones = os.listdir()
+# En accioens se encuentra una lista con todos los activos descargados en formato
+# csv
+# Posteriomente procesare cada uno de estos datos y los unire en un solo df
+get_data(acciones)
+
+returns, prices = get_data(acciones)
+df.columns
+market_assets = ['STOXX50E','STOXX','S&P500']
 
 
-
-
+capm = CAPM('SAN.MC', 'STOXX')
+capm.compute()
+capm.scatter()
+capm.alpha
+capm.dual_graph_normaliced()
 # Creando la base de datos, tambien conocieda como la matriz de precios y retornos
 # price_matrix, returns_matrix = base_retornos(acciones)
-df = get_data(acciones)
-df.isnull().sum()
-plt.scatter(df['^STOXX'],df['SAN.MC'])
+
 # Ahora veamos el enfoque del modelo CAPM
 # Para lo cual necesitamos hacer una regresion lineal teniendo como variable 
 # dependiente al vector de retornos de una accion y como independiente al vector 
 # retornos de un activo de mercado. Como seria el caso de un indice de mercado
-returns_matrix.columns
 # Definamos el vector de retornos del activo de mercado
 # Dado que tenemos acciones de mercados europeros tomaremos en cuenta al STOXX Y 
 # STOXX50
 
 # Definire una lista con los nombres de los activos de mercado
-market_assets = ['^STOXX50E_return','^STOXX_return', '^S&P500_return']
-x = np.array(returns_matrix[market_assets[2]])
-# definidos mis activos de mercado, procedo a elegir un activo de este mercado 
-y = np.array(returns_matrix['^VIX_return'])
-
-# Instancio la clase linregress del modulo np.stat
-
 
 
 
